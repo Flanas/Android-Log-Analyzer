@@ -1,0 +1,37 @@
+{
+    "NullPointerException": {
+        "description": "Error thrown when trying to use a variable or method that is null.",
+        "keywords": [
+            "android.context.Context.getSystemService",
+            "com.valet_manager.pointofsale.Data.Message.getMessage",
+            "Zebra (No connection to the printer)",
+            "com.pax.poslink.ManageResponse.ButtonNum",
+            "androidx.appcompat.app.AppCompatDialog.dismiss",
+            "com.couchbase.lite.Document.getId",
+            "androidx.appcompat.app.AlertDialog.dismiss",
+            "byte[] java.lang.String.getBytes",
+            "android.os.Handler.removeCallbacks",
+            "android.content.Context android.content.ContextWrapper.getApplicationContext",
+            "com.digitalpersona.uareu.Reader.Open",
+            "com.digitalpersona.uareu.Reader.CancelCapture",
+            "com.digitalpersona.uareu.Reader.Close",
+            "android.view.View.setOnClickListener",
+            "com.android.volley.NetworkResponse.data",
+            "boolean java.lang.Boolean.booleanValue",
+            "com.valet_manager.pointofsale.Data.PrepaidReservation com.valet_manager.pointofsale.Data.Reservation.toPrepaidReservation"
+        ]
+    },
+    "Parse": {
+        "description": "Indicates human errors in the logs caused by invalid input values.",
+        "keywords": [
+            "PARSE: ",
+            "MILITARY_HOUR_SUFFIX UNKNOWN WHITE_SPACE"
+        ]
+    },
+    "Crashed": {
+        "description": "Indicates a code crash due to runtime exceptions.",
+        "keywords": [
+            "thread in the application has crashed java.lang.RuntimeException: An error occurred while executing doInBackground"
+        ]
+    }
+}
