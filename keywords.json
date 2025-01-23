@@ -1,4 +1,18 @@
 {
+    "Crashed": {
+        "description": "Indicates a code crash due to runtime exceptions.",
+        "keywords": [
+            "thread in the application has crashed java.lang.RuntimeException: An error occurred while executing doInBackground"
+        ]
+    },
+    "Error": {
+        "description": "Indicates Fatal Errors",
+        "keywords": [
+            "ERROR",
+            "com.android.volley.TimeoutError",
+            "CouchbaseLiteException"
+        ]
+    },
     "NullPointerException": {
         "description": "Error thrown when trying to use a variable or method that is null.",
         "keywords": [
@@ -16,7 +30,16 @@
             "com.digitalpersona.uareu.Reader.CancelCapture",
             "com.digitalpersona.uareu.Reader.Close",
             "android.view.View.setOnClickListener",
+            "void com.valet_manager.pointofsale.Couchbase.Connection.receive",
             "com.android.volley.NetworkResponse.data",
+            "void com.valet_manager.pointofsale.Couchbase.Connection$MessageReceivedListener.onMessageReceived",
+            "void android.app.Dialog.dismiss",
+            "void com.zebra.sdk.comm.Connection.close",
+            "void com.epson.epos2.printer.Printer",
+            "java.lang.Object android.content.Context.getSystemService",
+            "boolean com.zebra.sdk.comm.Connection.isConnected",
+            "com.zebra.sdk.printer.PrinterStatus com.zebra.sdk.printer.ZebraPrinter.getCurrentStatus",
+            "void com.epson.epos2.printer.Printer.addTextSmooth",
             "boolean java.lang.Boolean.booleanValue",
             "com.valet_manager.pointofsale.Data.PrepaidReservation com.valet_manager.pointofsale.Data.Reservation.toPrepaidReservation"
         ]
@@ -27,11 +50,6 @@
             "PARSE: ",
             "MILITARY_HOUR_SUFFIX UNKNOWN WHITE_SPACE"
         ]
-    },
-    "Crashed": {
-        "description": "Indicates a code crash due to runtime exceptions.",
-        "keywords": [
-            "thread in the application has crashed java.lang.RuntimeException: An error occurred while executing doInBackground"
-        ]
     }
+    
 }

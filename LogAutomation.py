@@ -1,8 +1,8 @@
 import json
-from tkinter import Tk, messagebox
+import os
+from tkinter import Tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from datetime import datetime
-import os
 import sys
 
 def resource_path(relative_path):
@@ -14,7 +14,6 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 def browse_file():
-    """ Function to browse for a log file """
     Tk().withdraw()  # Hide the main tkinter window
     file_path = askopenfilename(
         title="Select a log file",
@@ -22,67 +21,50 @@ def browse_file():
     )
     return file_path
 
-def prompt_save_file(default_name):
-    """ Function to prompt the user to save the analysis results """
+def prompt_save_file():
     Tk().withdraw()  # Hide the main tkinter window
-    save = messagebox.askyesno("Save File", "The file was analyzed successfully. Do you want to save the results?")
-    if save:
-        file_path = asksaveasfilename(
-            title="Save Analysis As",
-            initialfile=default_name,
-            filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
-        )
-        return file_path
-    else:
-        return None
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    default_name = f"exceptionAnalysis_{current_date}.txt"
+    file_path = asksaveasfilename(
+        title="Save Analysis Report As",
+        initialfile=default_name,
+        defaultextension=".txt",
+        filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+    )
+    return file_path
 
 def search_errors(log_file, error_data):
-    """ Function to search for errors in the log file """
     results = {}
     unique_lines_per_error = {}
-    new_errors = {error_type: [] for error_type in error_data if error_type != "Parse"}
+    crashed_occurrences = []
 
     for error_type in error_data:
         results[error_type] = {"count": 0, "lines": []}
         unique_lines_per_error[error_type] = {}
-
-    all_keywords = {
-        error_type: [kw for kw in details["keywords"]]
-        for error_type, details in error_data.items()
-    }
 
     with open(log_file, 'r', encoding='utf-8') as log_file:
         for line_num, line in enumerate(log_file, start=1):
             line_lower = line.lower()
 
             for error_type, details in error_data.items():
-                matched_keywords = []
-                for keyword in details["keywords"]:
-                    if (error_type == "Parse" and keyword in line) or \
-                       (error_type != "Parse" and keyword.lower() in line_lower):
-                        matched_keywords.append(keyword)
-                        if line_num not in results[error_type]["lines"]:
-                            results[error_type]["lines"].append(line_num)
-                        if keyword not in unique_lines_per_error[error_type]:
-                            unique_lines_per_error[error_type][keyword] = line.strip()
-
-                if error_type == "Parse" and "PARSE" in line:
-                    if line_num not in results[error_type]["lines"]:
+                if error_type == "Crashed":
+                    if "crashed" in line_lower:
+                        results[error_type]["count"] += 1
                         results[error_type]["lines"].append(line_num)
-                        unique_lines_per_error[error_type][f"PARSE (general)"] = line.strip()
+                        crashed_occurrences.append((line_num, line.strip()))
 
-                elif error_type != "Parse" and error_type.lower() in line_lower:
-                    known_matches = any(kw.lower() in line_lower for kw in all_keywords[error_type])
-                    if not known_matches:
-                        new_errors[error_type].append(f"Line {line_num}: {line.strip()}")
+                else:
+                    for keyword in details["keywords"]:
+                        if keyword.lower() in line_lower:
+                            results[error_type]["count"] += 1
+                            if line_num not in results[error_type]["lines"]:
+                                results[error_type]["lines"].append(line_num)
+                            if keyword not in unique_lines_per_error[error_type]:
+                                unique_lines_per_error[error_type][keyword] = line.strip()
 
-                if matched_keywords or (error_type == "Parse" and "PARSE" in line):
-                    results[error_type]["count"] += 1
-
-    return results, unique_lines_per_error, new_errors
+    return results, unique_lines_per_error, crashed_occurrences
 
 def main():
-    """ Main function to execute the log file analysis """
     json_file_path = resource_path('keywords.json')  # Locate the JSON file
     try:
         with open(json_file_path, 'r') as f:
@@ -96,43 +78,42 @@ def main():
         print("No file selected. Exiting...")
         return
 
-    log_file_name = os.path.splitext(os.path.basename(log_file_path))[0]
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    default_output_name = f"{log_file_name}_analysis_{current_date}.txt"
-
-    output_file_path = prompt_save_file(default_output_name)
-    if output_file_path is None:
+    output_file_path = prompt_save_file()
+    if not output_file_path:
         print("No save location selected. Exiting...")
         return
-
-    found_errors_line, unique_lines_per_error, new_errors = search_errors(log_file_path, error_data)
 
     with open(output_file_path, 'w') as output_file:
         def write_and_print(line):
             print(line)
             output_file.write(line + '\n')
 
-        write_and_print("\nError Analysis:\n")
+        write_and_print(f"Consolidated Error Analysis Report\n")
+        write_and_print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        write_and_print(f"File: {log_file_path}\n")
+        write_and_print("=" * 50 + "\n")
+
+        found_errors_line, unique_lines_per_error, crashed_occurrences = search_errors(log_file_path, error_data)
 
         for error_type, data in found_errors_line.items():
-            write_and_print(f"{error_type}:")
+            write_and_print(f"\n{error_type}:")
             write_and_print(f"  Total Occurrences: {data['count']}")
             if data['lines']:
                 write_and_print(f"  Found on Lines: {', '.join(map(str, data['lines']))}\n")
-                write_and_print("  Known Errors:")
-                for keyword, line_content in unique_lines_per_error[error_type].items():
-                    write_and_print(f"    - {keyword}: {line_content}")
+                if error_type == "Crashed":
+                    write_and_print("  Errors Found:")
+                    for line_num, line_content in crashed_occurrences:
+                        write_and_print(f"    Line {line_num}: {line_content}")
+                else:
+                    write_and_print("  Known Errors:")
+                    for keyword, line_content in unique_lines_per_error[error_type].items():
+                        write_and_print(f"    - {keyword}: {line_content}")
             else:
                 write_and_print("  No occurrences found.\n")
 
-            if error_type != "Parse" and error_type in new_errors and new_errors[error_type]:
-                write_and_print(f"\n  New Errors Found: {len(new_errors[error_type])}")
-                for error in new_errors[error_type]:
-                    write_and_print(f"    {error}")
+        write_and_print("=" * 50 + "\n")
 
-            write_and_print("")
-
-    print(f"\nAnalysis complete. Results saved to {output_file_path}")
+    print(f"\nAnalysis complete. Consolidated report saved to {output_file_path}")
 
 if __name__ == "__main__":
     main()
