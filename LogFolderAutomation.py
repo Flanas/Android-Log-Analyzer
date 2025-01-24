@@ -1,7 +1,7 @@
 import json
 import os
 from tkinter import Tk
-from tkinter.filedialog import askdirectory, asksaveasfilename
+from tkinter.filedialog import askdirectory
 from datetime import datetime
 import sys
 
@@ -18,17 +18,18 @@ def browse_folder():
     folder_path = askdirectory(title="Select a folder containing log files")
     return folder_path
 
-def prompt_save_file(folder_name):
+def choose_save_location():
     Tk().withdraw()  # Hide the main tkinter window
+    folder_path = askdirectory(title="Select a location to save the analysis folder")
+    return folder_path
+
+def create_analysis_folder(base_path, folder_name):
     current_date = datetime.now().strftime("%Y-%m-%d")
-    default_name = f"{folder_name}_exceptionAnalysis_{current_date}.txt"
-    file_path = asksaveasfilename(
-        title="Save Analysis Report As",
-        initialfile=default_name,
-        defaultextension=".txt",
-        filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
-    )
-    return file_path
+    consolidated_folder_name = f"{folder_name}_ConsolidatedReport_{current_date}"
+    full_path = os.path.join(base_path, consolidated_folder_name)
+    if not os.path.exists(full_path):
+        os.makedirs(full_path)
+    return full_path
 
 def search_errors(log_file, error_data):
     results = {}
@@ -61,6 +62,28 @@ def search_errors(log_file, error_data):
 
     return results, unique_lines_per_error, crashed_occurrences
 
+def save_priority_report(file_data, folder_name, analysis_folder):
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    priority_file_name = os.path.join(analysis_folder, f"{folder_name}_ReportSummary_{current_date}.txt")
+
+    sorted_files = sorted(file_data.items(), key=lambda x: x[1]['Crashed'], reverse=True)
+
+    with open(priority_file_name, 'w') as priority_file:
+        priority_file.write(f"Priority Analysis Report\n")
+        priority_file.write(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        priority_file.write(f"Folder: {folder_name}\n")
+        priority_file.write("=" * 500 + "\n")
+
+        for file_name, data in sorted_files:
+            priority_file.write(f"File: {file_name}\n")
+            priority_file.write("_" * 50 + "\n")
+            priority_file.write(f" \n Crashed Errors: {data['Crashed']}\n")
+            priority_file.write(f"  New Errors: {data['New Errors']}\n")
+            priority_file.write(f"  Known Errors: {data['Known Errors']}\n\n")
+            priority_file.write("=" * 50 + "\n\n")
+
+    print(f"Priority report saved to {priority_file_name}")
+
 def main():
     json_file_path = resource_path('keywords.json')  # Locate the JSON file
     try:
@@ -76,16 +99,23 @@ def main():
         return
 
     folder_name = os.path.basename(folder_path)
+    save_location = choose_save_location()
+    if not save_location:
+        print("No save location selected. Exiting...")
+        return
+
+    analysis_folder = create_analysis_folder(save_location, folder_name)
+
     txt_files = [f for f in os.listdir(folder_path) if f.endswith('.txt')]
 
     if not txt_files:
         print("No .txt files found in the selected folder. Exiting...")
         return
 
-    output_file_path = prompt_save_file(folder_name)
-    if not output_file_path:
-        print("No save location selected. Exiting...")
-        return
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    output_file_path = os.path.join(analysis_folder, f"{folder_name}_ExceptionAnalysis_{current_date}.txt")
+
+    file_error_data = {}
 
     with open(output_file_path, 'w') as output_file:
         def write_and_print(line):
@@ -95,14 +125,20 @@ def main():
         write_and_print(f"Consolidated Error Analysis Report\n")
         write_and_print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         write_and_print(f"Folder: {folder_path}\n")
-        write_and_print("=" * 50 + "\n")
+        write_and_print("=" * 500 + "\n")
 
         for file_name in txt_files:
             file_path = os.path.join(folder_path, file_name)
             write_and_print(f"Analyzing File: {file_name}\n")
-            write_and_print("=" * 50 )
+            write_and_print("=" * 500 )
 
             found_errors_line, unique_lines_per_error, crashed_occurrences = search_errors(file_path, error_data)
+
+            file_error_data[file_name] = {
+                "Crashed": found_errors_line.get("Crashed", {}).get("count", 0),
+                "New Errors": sum([found_errors_line[et]["count"] for et in found_errors_line if et != "Crashed"]),
+                "Known Errors": len(unique_lines_per_error)
+            }
 
             for error_type, data in found_errors_line.items():
                 write_and_print(f"\n{error_type}:")
@@ -122,6 +158,7 @@ def main():
 
             write_and_print("=" * 500 + "\n")
 
+    save_priority_report(file_error_data, folder_name, analysis_folder)
     print(f"\nAnalysis complete. Consolidated report saved to {output_file_path}")
 
 if __name__ == "__main__":
