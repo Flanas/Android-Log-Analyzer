@@ -64,7 +64,7 @@ def search_errors(log_file, error_data):
 
     return results, unique_lines_per_error, crashed_occurrences
 
-def main():
+def main(file_path=None, save_path=None):
     json_file_path = resource_path('keywords.json')  # Locate the JSON file
     try:
         with open(json_file_path, 'r') as f:
@@ -73,27 +73,31 @@ def main():
         print(f"Error: Could not find the file 'keywords.json' at {json_file_path}.")
         return
 
-    log_file_path = browse_file()
-    if not log_file_path:
+    # Use the provided file_path or prompt the user if it is not provided
+    if file_path is None:
+        file_path = browse_file()
+    if not file_path:
         print("No file selected. Exiting...")
         return
 
-    output_file_path = prompt_save_file()
-    if not output_file_path:
+    # Use the provided save_path or prompt the user if it is not provided
+    if save_path is None:
+        save_path = prompt_save_file()
+    if not save_path:
         print("No save location selected. Exiting...")
         return
 
-    with open(output_file_path, 'w') as output_file:
+    with open(save_path, 'w') as output_file:
         def write_and_print(line):
             print(line)
             output_file.write(line + '\n')
 
         write_and_print(f"Consolidated Error Analysis Report\n")
         write_and_print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        write_and_print(f"File: {log_file_path}\n")
+        write_and_print(f"File: {file_path}\n")
         write_and_print("=" * 50 + "\n")
 
-        found_errors_line, unique_lines_per_error, crashed_occurrences = search_errors(log_file_path, error_data)
+        found_errors_line, unique_lines_per_error, crashed_occurrences = search_errors(file_path, error_data)
 
         for error_type, data in found_errors_line.items():
             write_and_print(f"\n{error_type}:")
@@ -113,7 +117,7 @@ def main():
 
         write_and_print("=" * 50 + "\n")
 
-    print(f"\nAnalysis complete. Consolidated report saved to {output_file_path}")
+    print(f"\nAnalysis complete. Consolidated report saved to {save_path}")
 
 if __name__ == "__main__":
     main()

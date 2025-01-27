@@ -5,6 +5,7 @@ from tkinter.filedialog import askdirectory
 from datetime import datetime
 import sys
 
+
 def resource_path(relative_path):
     """ Get the absolute path to a resource, works for both development and PyInstaller bundled mode """
     if getattr(sys, 'frozen', False):  # Check if running as a PyInstaller bundle
@@ -13,15 +14,18 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")  # Current working directory during development
     return os.path.join(base_path, relative_path)
 
+
 def browse_folder():
     Tk().withdraw()  # Hide the main tkinter window
     folder_path = askdirectory(title="Select a folder containing log files")
     return folder_path
 
+
 def choose_save_location():
     Tk().withdraw()  # Hide the main tkinter window
     folder_path = askdirectory(title="Select a location to save the analysis folder")
     return folder_path
+
 
 def create_analysis_folder(base_path, folder_name):
     current_date = datetime.now().strftime("%Y-%m-%d")
@@ -30,6 +34,7 @@ def create_analysis_folder(base_path, folder_name):
     if not os.path.exists(full_path):
         os.makedirs(full_path)
     return full_path
+
 
 def search_errors(log_file, error_data):
     results = {}
@@ -62,6 +67,7 @@ def search_errors(log_file, error_data):
 
     return results, unique_lines_per_error, crashed_occurrences
 
+
 def save_priority_report(file_data, folder_name, analysis_folder):
     current_date = datetime.now().strftime("%Y-%m-%d")
     priority_file_name = os.path.join(analysis_folder, f"{folder_name}_ReportSummary_{current_date}.txt")
@@ -77,14 +83,15 @@ def save_priority_report(file_data, folder_name, analysis_folder):
         for file_name, data in sorted_files:
             priority_file.write(f"File: {file_name}\n")
             priority_file.write("_" * 50 + "\n")
-            priority_file.write(f" \n Crashed Errors: {data['Crashed']}\n")
+            priority_file.write(f"  Crashed Errors: {data['Crashed']}\n")
             priority_file.write(f"  New Errors: {data['New Errors']}\n")
             priority_file.write(f"  Known Errors: {data['Known Errors']}\n\n")
             priority_file.write("=" * 50 + "\n\n")
 
     print(f"Priority report saved to {priority_file_name}")
 
-def main():
+
+def main(folder_path=None, save_path=None):
     json_file_path = resource_path('keywords.json')  # Locate the JSON file
     try:
         with open(json_file_path, 'r') as f:
@@ -93,19 +100,37 @@ def main():
         print(f"Error: Could not find the file 'keywords.json' at {json_file_path}.")
         return
 
-    folder_path = browse_folder()
-    if not folder_path:
-        print("No folder selected. Exiting...")
+    # If folder_path is not provided, prompt the user to select a folder
+    if folder_path is None:
+        folder_path = browse_folder()
+        if not folder_path:
+            print("No folder selected. Exiting...")
+            return
+
+    # Validate that folder_path is a valid directory
+    if not os.path.isdir(folder_path):
+        print(f"Error: '{folder_path}' is not a valid directory. Exiting...")
         return
 
+    # Extract the folder name from the folder_path
     folder_name = os.path.basename(folder_path)
-    save_location = choose_save_location()
-    if not save_location:
-        print("No save location selected. Exiting...")
+
+    # If save_path is not provided, prompt the user to select a save location
+    if save_path is None:
+        save_path = choose_save_location()
+        if not save_path:
+            print("No save location selected. Exiting...")
+            return
+
+    # Validate that save_path is a valid directory
+    if not os.path.isdir(save_path):
+        print(f"Error: '{save_path}' is not a valid directory. Exiting...")
         return
 
-    analysis_folder = create_analysis_folder(save_location, folder_name)
+    # Create an analysis folder in the save location
+    analysis_folder = create_analysis_folder(save_path, folder_name)
 
+    # Find all .txt files in the selected folder
     txt_files = [f for f in os.listdir(folder_path) if f.endswith('.txt')]
 
     if not txt_files:
@@ -117,6 +142,7 @@ def main():
 
     file_error_data = {}
 
+    # Write the analysis to the output file
     with open(output_file_path, 'w') as output_file:
         def write_and_print(line):
             print(line)
@@ -130,7 +156,7 @@ def main():
         for file_name in txt_files:
             file_path = os.path.join(folder_path, file_name)
             write_and_print(f"Analyzing File: {file_name}\n")
-            write_and_print("=" * 500 )
+            write_and_print("=" * 500)
 
             found_errors_line, unique_lines_per_error, crashed_occurrences = search_errors(file_path, error_data)
 
@@ -160,6 +186,10 @@ def main():
 
     save_priority_report(file_error_data, folder_name, analysis_folder)
     print(f"\nAnalysis complete. Consolidated report saved to {output_file_path}")
+
+    print(f"Folder Path: {folder_path}")
+    print(f"Save Path: {save_path}")
+
 
 if __name__ == "__main__":
     main()
