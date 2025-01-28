@@ -5,7 +5,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox, QFileDialog, QProgressBar
 )
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal, QTimer
 from LogAutomation import main as log_automation_main
 from LogFolderAutomation import main as log_folder_automation_main
 
