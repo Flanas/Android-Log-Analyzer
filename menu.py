@@ -3,36 +3,26 @@ import os
 from datetime import datetime
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox, QFileDialog, QProgressBar
+    QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox, QFileDialog
 )
-from PyQt5.QtCore import QThread, pyqtSignal, QTimer
-from LogAutomation import main as log_automation_main
+from PyQt5.QtCore import QThread, pyqtSignal
 from LogFolderAutomation import main as log_folder_automation_main
+from LogAutomation import main as log_automation_main
 
 
 class AnalysisWorker(QThread):
-    progress = pyqtSignal(int)  # Signal to update the progress bar
     finished = pyqtSignal(str)  # Signal when the analysis is complete
     error = pyqtSignal(str)     # Signal when an error occurs
 
-    def __init__(self, folder_path, save_path, log_files):
+    def __init__(self, folder_path, save_path):
         super().__init__()
         self.folder_path = folder_path
         self.save_path = save_path
-        self.log_files = log_files
 
     def run(self):
         try:
-            total_files = len(self.log_files)
-            for index, log_file in enumerate(self.log_files):
-                log_file_path = os.path.join(self.folder_path, log_file)
-                print(f"Processing file: {log_file_path}")  # Debugging log file path
-
-                # Perform analysis on the current file
-                log_folder_automation_main(folder_path=self.folder_path, save_path=self.save_path)
-
-                # Emit progress signal
-                self.progress.emit(index + 1)
+            # Run LogFolderAutomation directly without iterating files
+            log_folder_automation_main(folder_path=self.folder_path, save_path=self.save_path)
 
             # Emit finished signal with the analysis folder path
             analysis_folder_name = os.path.basename(self.folder_path) + f"_ConsolidatedReport_{datetime.now().strftime('%Y-%m-%d')}"
@@ -73,13 +63,6 @@ class LogAutomationUI(QWidget):
         btn_exit.clicked.connect(self.exit_program)
         layout.addWidget(btn_exit)
 
-        # Progress Bar
-        self.progress_bar = QProgressBar(self)
-        self.progress_bar.setMinimum(0)
-        self.progress_bar.setValue(0)
-        self.progress_bar.hide()
-        layout.addWidget(self.progress_bar)
-
         # Set layout
         self.setLayout(layout)
 
@@ -105,28 +88,15 @@ class LogAutomationUI(QWidget):
             QMessageBox.warning(self, "No Save Location", "No save location specified. Please try again.")
             return
 
-        self.progress_bar.show()
-        self.progress_bar.setValue(0)
-        self.progress_bar.setMaximum(100)
-
-        def process_single_file():
-            try:
-                log_automation_main(file_path, save_path)
-                self.progress_bar.setValue(100)
-                QMessageBox.information(
-                    self,
-                    "Success",
-                    f"The log file was analyzed successfully.\n\nAnalysis report saved to:\n{save_path}"
-                )
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"An error occurred: {e}")
-            finally:
-                self.progress_bar.hide()
-
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(process_single_file)
-        self.timer.setSingleShot(True)
-        self.timer.start(100)
+        try:
+            log_automation_main(file_path, save_path)
+            QMessageBox.information(
+                self,
+                "Success",
+                f"The log file was analyzed successfully.\n\nAnalysis report saved to:\n{save_path}"
+            )
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An error occurred: {e}")
 
     def analyze_multiple_logs(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Select a Folder Containing Log Files")
@@ -139,26 +109,13 @@ class LogAutomationUI(QWidget):
             QMessageBox.warning(self, "No Location Selected", "No location specified to save the analysis. Returning to the menu.")
             return
 
-        log_files = [f for f in os.listdir(folder_path) if f.endswith('.txt')]
-        total_files = len(log_files)
-
-        if total_files == 0:
-            QMessageBox.warning(self, "No Files Found", "No log files found in the selected folder.")
-            return
-
-        self.progress_bar.show()
-        self.progress_bar.setValue(0)
-        self.progress_bar.setMaximum(total_files)
-
         # Start analysis worker thread
-        self.worker = AnalysisWorker(folder_path, save_path, log_files)
-        self.worker.progress.connect(self.progress_bar.setValue)
+        self.worker = AnalysisWorker(folder_path, save_path)
         self.worker.finished.connect(self.on_analysis_finished)
         self.worker.error.connect(self.on_analysis_error)
         self.worker.start()
 
     def on_analysis_finished(self, analysis_path):
-        self.progress_bar.hide()
         QMessageBox.information(
             self,
             "Success",
@@ -166,7 +123,6 @@ class LogAutomationUI(QWidget):
         )
 
     def on_analysis_error(self, error_message):
-        self.progress_bar.hide()
         QMessageBox.critical(self, "Error", f"An error occurred: {error_message}")
 
     def exit_program(self):
