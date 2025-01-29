@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import QThread, pyqtSignal
 from LogFolderAutomation import main as log_folder_automation_main
 from LogAutomation import main as log_automation_main
+import Rename  # Import Rename.py module
 
 
 class AnalysisWorker(QThread):
@@ -39,7 +40,7 @@ class LogAutomationUI(QWidget):
 
     def init_ui(self):
         self.setWindowTitle("Log Automation Menu")
-        self.setGeometry(200, 200, 400, 200)
+        self.setGeometry(200, 200, 400, 250)
 
         # Create layout
         layout = QVBoxLayout()
@@ -58,6 +59,10 @@ class LogAutomationUI(QWidget):
         btn_multiple_logs = QPushButton("Analyze multiple log files in a folder")
         btn_multiple_logs.clicked.connect(self.analyze_multiple_logs)
         layout.addWidget(btn_multiple_logs)
+
+        btn_rename_files = QPushButton("Rename log files in a folder")  # New button
+        btn_rename_files.clicked.connect(self.rename_files)  # Connect button to rename function
+        layout.addWidget(btn_rename_files)
 
         btn_exit = QPushButton("Exit")
         btn_exit.clicked.connect(self.exit_program)
@@ -122,6 +127,14 @@ class LogAutomationUI(QWidget):
         self.worker.error.connect(self.on_analysis_error)
         self.worker.error.connect(self.processing_dialog.close)  # Close immediately if there's an error
         self.worker.start()
+
+    def rename_files(self):
+        """Calls Rename.py to rename files in a selected folder."""
+        try:
+            Rename.main()
+            QMessageBox.information(self, "Success", "Files have been renamed successfully!")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An error occurred while renaming files: {e}")
 
     def on_analysis_finished(self, analysis_path):
         # Show success message
