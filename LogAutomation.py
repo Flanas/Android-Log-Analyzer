@@ -45,20 +45,21 @@ def search_errors(log_file, error_data):
     with open(log_file, 'r', encoding='utf-8') as log_file:
         for line_num, line in enumerate(log_file, start=1):
             line_lower = line.lower()
-
+            
             for error_type, details in error_data.items():
                 if error_type == "Crashed":
                     if "crashed" in line_lower:
                         results[error_type]["count"] += 1
                         results[error_type]["lines"].append(line_num)
                         crashed_occurrences.append((line_num, line.strip()))
-
                 else:
+                    matched = False  # Flag to prevent multiple counts for the same line
                     for keyword in details["keywords"]:
                         if keyword.lower() in line_lower:
-                            results[error_type]["count"] += 1
-                            if line_num not in results[error_type]["lines"]:
+                            if not matched:
+                                results[error_type]["count"] += 1  # Count only once per line
                                 results[error_type]["lines"].append(line_num)
+                                matched = True  # Prevent further increments for this line
                             if keyword not in unique_lines_per_error[error_type]:
                                 unique_lines_per_error[error_type][keyword] = line.strip()
 
@@ -71,6 +72,9 @@ def main(file_path=None, save_path=None):
             error_data = json.load(f)
     except FileNotFoundError:
         print(f"Error: Could not find the file 'keywords.json' at {json_file_path}.")
+        return
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON in 'keywords.json'. {e}")
         return
 
     # Use the provided file_path or prompt the user if it is not provided
@@ -87,37 +91,42 @@ def main(file_path=None, save_path=None):
         print("No save location selected. Exiting...")
         return
 
-    with open(save_path, 'w') as output_file:
-        def write_and_print(line):
-            print(line)
-            output_file.write(line + '\n')
+    try:
+        with open(save_path, 'w') as output_file:
+            def write_and_print(line):
+                print(line)
+                output_file.write(line + '\n')
 
-        write_and_print(f"Consolidated Error Analysis Report\n")
-        write_and_print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        write_and_print(f"File: {file_path}\n")
-        write_and_print("=" * 50 + "\n")
+            write_and_print(f"Consolidated Error Analysis Report\n")
+            write_and_print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            write_and_print(f"File: {file_path}\n")
+            write_and_print("=" * 50 + "\n")
 
-        found_errors_line, unique_lines_per_error, crashed_occurrences = search_errors(file_path, error_data)
+            found_errors_line, unique_lines_per_error, crashed_occurrences = search_errors(file_path, error_data)
 
-        for error_type, data in found_errors_line.items():
-            write_and_print(f"\n{error_type}:")
-            write_and_print(f"  Total Occurrences: {data['count']}")
-            if data['lines']:
-                write_and_print(f"  Found on Lines: {', '.join(map(str, data['lines']))}\n")
-                if error_type == "Crashed":
-                    write_and_print("  Errors Found:")
-                    for line_num, line_content in crashed_occurrences:
-                        write_and_print(f"    Line {line_num}: {line_content}")
+            for error_type, data in found_errors_line.items():
+                write_and_print(f"\n{error_type}:")
+                write_and_print(f"  Total Occurrences: {data['count']}")
+                if data['lines']:
+                    write_and_print(f"  Found on Lines: {', '.join(map(str, data['lines']))}\n")
+                    if error_type == "Crashed":
+                        write_and_print("  Errors Found:")
+                        for line_num, line_content in crashed_occurrences:
+                            write_and_print(f"    Line {line_num}: {line_content}")
+                    else:
+                        write_and_print("  Known Errors:")
+                        for keyword, line_content in unique_lines_per_error[error_type].items():
+                            write_and_print(f"    - {keyword}: {line_content}")
                 else:
-                    write_and_print("  Known Errors:")
-                    for keyword, line_content in unique_lines_per_error[error_type].items():
-                        write_and_print(f"    - {keyword}: {line_content}")
-            else:
-                write_and_print("  No occurrences found.\n")
+                    write_and_print("  No occurrences found.\n")
 
-        write_and_print("=" * 50 + "\n")
+            write_and_print("=" * 50 + "\n")
 
-    print(f"\nAnalysis complete. Consolidated report saved to {save_path}")
+        print(f"\nAnalysis complete. Consolidated report saved to {save_path}")
+    except IOError as e:
+        print(f"Error: Unable to write to file {save_path}. {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 if __name__ == "__main__":
     main()

@@ -55,13 +55,14 @@ def search_errors(log_file, error_data):
                         results[error_type]["count"] += 1
                         results[error_type]["lines"].append(line_num)
                         crashed_occurrences.append((line_num, line.strip()))
-
                 else:
+                    matched = False  # Prevent multiple counts per line
                     for keyword in details["keywords"]:
                         if keyword.lower() in line_lower:
-                            results[error_type]["count"] += 1
-                            if line_num not in results[error_type]["lines"]:
+                            if not matched:
+                                results[error_type]["count"] += 1  # Count only once per line
                                 results[error_type]["lines"].append(line_num)
+                                matched = True  # Prevent further increments for this line
                             if keyword not in unique_lines_per_error[error_type]:
                                 unique_lines_per_error[error_type][keyword] = line.strip()
 
@@ -163,7 +164,7 @@ def main(folder_path=None, save_path=None):
             file_error_data[file_name] = {
                 "Crashed": found_errors_line.get("Crashed", {}).get("count", 0),
                 "New Errors": sum([found_errors_line[et]["count"] for et in found_errors_line if et != "Crashed"]),
-                "Known Errors": len(unique_lines_per_error)
+                "Known Errors": sum(1 for et in unique_lines_per_error if unique_lines_per_error[et])  # Only count non-empty errors
             }
 
             for error_type, data in found_errors_line.items():
@@ -193,3 +194,4 @@ def main(folder_path=None, save_path=None):
 
 if __name__ == "__main__":
     main()
+

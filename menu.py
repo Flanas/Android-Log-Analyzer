@@ -109,20 +109,35 @@ class LogAutomationUI(QWidget):
             QMessageBox.warning(self, "No Location Selected", "No location specified to save the analysis. Returning to the menu.")
             return
 
+        # Create a processing dialog with no buttons initially
+        self.processing_dialog = QMessageBox(self)
+        self.processing_dialog.setWindowTitle("Analyzing Files")
+        self.processing_dialog.setText("Analyzing files: Please wait...")
+        self.processing_dialog.setStandardButtons(QMessageBox.NoButton)  # No buttons initially
+        self.processing_dialog.show()
+
         # Start analysis worker thread
         self.worker = AnalysisWorker(folder_path, save_path)
         self.worker.finished.connect(self.on_analysis_finished)
         self.worker.error.connect(self.on_analysis_error)
+        self.worker.error.connect(self.processing_dialog.close)  # Close immediately if there's an error
         self.worker.start()
 
     def on_analysis_finished(self, analysis_path):
+        # Show success message
         QMessageBox.information(
             self,
             "Success",
             f"The log files were analyzed successfully.\n\nConsolidated report saved to: {analysis_path}"
         )
 
+        # Now, update the "Analyzing Files" dialog to show a Close button
+        self.processing_dialog.setStandardButtons(QMessageBox.Close)
+        self.processing_dialog.button(QMessageBox.Close).clicked.connect(self.processing_dialog.close)
+        self.processing_dialog.setText("Analysis Complete! Click Close to exit.")
+
     def on_analysis_error(self, error_message):
+        self.processing_dialog.close()  # Close processing dialog immediately on error
         QMessageBox.critical(self, "Error", f"An error occurred: {error_message}")
 
     def exit_program(self):
