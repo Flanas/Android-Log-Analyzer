@@ -17,23 +17,29 @@ def rename_files_in_folder():
 
     # Get the folder name
     folder_name = os.path.basename(folder_path)
+    print(f"Selected folder: {folder_name}")
 
     # Get today's date
     today_date = datetime.now().strftime("%Y-%m-%d")
+    print(f"Today's date: {today_date}")
 
     # Iterate over all files in the folder
     for filename in os.listdir(folder_path):
         old_path = os.path.join(folder_path, filename)
+        print(f"Processing file: {filename}")
 
-        if filename.startswith("app.") and filename.endswith(".txt"):
-            # Replace "app." with the folder name
-            new_filename = filename.replace("app.", f"{folder_name}.", 1)
-
-        elif filename == "app.txt":
+        if filename == "app.txt":
             # Rename to "foldername.YYYY-MM-DD.txt"
             new_filename = f"{folder_name}.{today_date}.txt"
+            print(f"Renaming 'app.txt' to: {new_filename}")
+
+        elif filename.startswith("app.") and filename.endswith(".txt"):
+            # Replace "app." with the folder name
+            new_filename = filename.replace("app.", f"{folder_name}.", 1)
+            print(f"Renaming 'app.*.txt' to: {new_filename}")
 
         else:
+            print(f"Skipping file (does not match pattern): {filename}")
             continue  # Skip files that don't match the pattern
 
         new_path = os.path.join(folder_path, new_filename)
