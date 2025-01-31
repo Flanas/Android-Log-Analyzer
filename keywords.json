@@ -14,7 +14,7 @@
         ]
     },
     "NullPointerException": {
-        "description": "Error thrown when trying to use a variable or method that is null.",
+        "description": "Exception thrown when trying to use a variable or method that is null.",
         "keywords": [
             "android.context.Context.getSystemService",
             "com.valet_manager.pointofsale.Data.Message.getMessage",
@@ -49,6 +49,12 @@
         "keywords": [
             "PARSE: ",
             "MILITARY_HOUR_SUFFIX UNKNOWN WHITE_SPACE"
+        ]
+    },
+    "LPR Disconnections": {
+        "description": "Indicates LPR Disconnection from the Network.",
+        "keywords": [
+            "LPR: failed to connect"
         ]
     }
     
