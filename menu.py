@@ -59,8 +59,8 @@ class LogAutomationUI(QWidget):
         btn_rename_files.clicked.connect(self.rename_files)
         layout.addWidget(btn_rename_files)
 
-        btn_rename_multiple = QPushButton("Rename multiple folder log files")  # New button
-        btn_rename_multiple.clicked.connect(self.rename_multiple_folder_files)  # Connect to function
+        btn_rename_multiple = QPushButton("Rename multiple folder log files")
+        btn_rename_multiple.clicked.connect(self.rename_multiple_folder_files)
         layout.addWidget(btn_rename_multiple)
 
         btn_exit = QPushButton("Exit")
@@ -121,15 +121,35 @@ class LogAutomationUI(QWidget):
         self.worker.start()
 
     def rename_files(self):
+        folder_path = QFileDialog.getExistingDirectory(self, "Select a Folder Containing Log Files")
+        if not folder_path:
+            QMessageBox.warning(self, "No Selection", "No folder selected. Please try again.")
+            return
+
+        save_path = QFileDialog.getExistingDirectory(self, "Select a Location to Save the Renamed Files")
+        if not save_path:
+            QMessageBox.warning(self, "No Location Selected", "No location specified to save the renamed files. Returning to the menu.")
+            return
+
         try:
-            Rename.main()
+            Rename.main(folder_path, save_path)  # Assuming Rename.main() can accept folder_path and save_path as arguments
             QMessageBox.information(self, "Success", "Files have been renamed successfully!")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred while renaming files: {e}")
 
     def rename_multiple_folder_files(self):
+        folder_path = QFileDialog.getExistingDirectory(self, "Select a Folder Containing Multiple Folders with Log Files")
+        if not folder_path:
+            QMessageBox.warning(self, "No Selection", "No folder selected. Please try again.")
+            return
+
+        save_path = QFileDialog.getExistingDirectory(self, "Select a Location to Save the Renamed Files")
+        if not save_path:
+            QMessageBox.warning(self, "No Location Selected", "No location specified to save the renamed files. Returning to the menu.")
+            return
+
         try:
-            RenameMultipleFolderFiles.main()
+            RenameMultipleFolderFiles.main(folder_path, save_path)  # Assuming RenameMultipleFolderFiles.main() can accept folder_path and save_path as arguments
             QMessageBox.information(self, "Success", "Files from multiple folders have been renamed successfully!")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred while renaming multiple folder files: {e}")

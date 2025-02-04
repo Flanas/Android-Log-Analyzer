@@ -1,26 +1,24 @@
 import os
 import shutil
-import tkinter as tk
-from tkinter import filedialog
 from datetime import datetime
 
-def rename_and_copy_files():
-    """Renames files inside each subfolder and copies them to a new directory."""
+def rename_and_copy_files(master_folder, save_path):
+    """
+    Renames files inside each subfolder and copies them to a new directory.
     
-    # Open a folder selection dialog for the master folder
-    root = tk.Tk()
-    root.withdraw()  # Hide the root window
-    master_folder = filedialog.askdirectory(title="Select Master Folder")
-
-    if not master_folder:
-        print("No folder selected. Exiting...")
+    Args:
+        master_folder (str): Path to the master folder containing subfolders with files.
+        save_path (str): Path to the folder where renamed files will be saved.
+    """
+    if not master_folder or not save_path:
+        print("No master folder or save path provided. Exiting...")
         return
 
     # Get the master folder's name
     master_folder_name = os.path.basename(master_folder)
     
     # Create the output directory
-    renamed_folder = f"{master_folder}_Renamed"
+    renamed_folder = os.path.join(save_path, f"{master_folder_name}_Renamed")
     os.makedirs(renamed_folder, exist_ok=True)
 
     # Get today's date
@@ -55,9 +53,31 @@ def rename_and_copy_files():
 
     print("Processing completed! All files are stored in:", renamed_folder)
 
-def main():
-    """Main function to initiate file processing."""
-    rename_and_copy_files()
+def main(master_folder=None, save_path=None):
+    """
+    Main function to initiate file processing.
+    
+    Args:
+        master_folder (str): Path to the master folder containing subfolders with files.
+        save_path (str): Path to the folder where renamed files will be saved.
+    """
+    if not master_folder or not save_path:
+        print("No master folder or save path provided. Exiting...")
+        return
+
+    rename_and_copy_files(master_folder, save_path)
 
 if __name__ == "__main__":
-    main()
+    # For standalone execution, use the original tkinter folder selection
+    import tkinter as tk
+    from tkinter import filedialog
+
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    master_folder = filedialog.askdirectory(title="Select Master Folder")
+    save_path = filedialog.askdirectory(title="Select Folder to Save Renamed Files")
+
+    if master_folder and save_path:
+        main(master_folder, save_path)
+    else:
+        print("No master folder or save path selected. Exiting...")
