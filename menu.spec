@@ -5,7 +5,7 @@ a = Analysis(
     ['menu.py'],
     pathex=[],
     binaries=[],
-    datas=[('LogAutomation.py', '.'), ('LogFolderAutomation.py', '.'), ('Rename.py', '.'), ('RenameMultipleFolderFiles.py', '.'), ('keywords.json', '.')],
+    datas=[('keywords.json', '.'), ('LogFolderAutomation.py', '.'), ('LogAutomation.py', '.'), ('Rename.py', '.'), ('RenameMultipleFolderFiles.py', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

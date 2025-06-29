@@ -56,6 +56,14 @@
         "keywords": [
             "LPR: failed to connect"
         ]
+    },
+    "ClockIn/Out | Reservations | SMS": {
+        "description": "Indicates interactions of SMS, Reservations or SMS.",
+        "keywords": [
+            "PAYROLL ",
+            "PaymentType:Validation",
+            "+"
+        ]
     }
     
 }

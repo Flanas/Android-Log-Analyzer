@@ -132,7 +132,7 @@ class LogAutomationUI(QWidget):
             return
 
         try:
-            Rename.main(folder_path, save_path)  # Assuming Rename.main() can accept folder_path and save_path as arguments
+            Rename.main(folder_path, save_path)  # Pass folder_path and save_path
             QMessageBox.information(self, "Success", "Files have been renamed successfully!")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred while renaming files: {e}")
@@ -149,7 +149,7 @@ class LogAutomationUI(QWidget):
             return
 
         try:
-            RenameMultipleFolderFiles.main(folder_path, save_path)  # Assuming RenameMultipleFolderFiles.main() can accept folder_path and save_path as arguments
+            RenameMultipleFolderFiles.main(folder_path, save_path)  # Pass folder_path and save_path
             QMessageBox.information(self, "Success", "Files from multiple folders have been renamed successfully!")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred while renaming multiple folder files: {e}")
