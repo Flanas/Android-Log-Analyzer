@@ -53,6 +53,7 @@ The `.json` file acts as the brain of the operation. It contains error keys and 
   "OutOfMemoryError": "java.lang.OutOfMemoryError",
   "CrashLoop": "FATAL EXCEPTION"
 }
+```
 # LogExceptionAutomation
 Log Exception Automation. Purpose to choose different options to analyze for errors and exceptions.
 
